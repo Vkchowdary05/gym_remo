@@ -1,0 +1,93 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidProfile() {
+      let data = request.resource.data;
+      return data.name is string 
+        && data.name.size() > 0 
+        && data.name.size() <= 100
+        && data.gender in ['male', 'female', 'other']
+        && data.weight is number 
+        && data.weight >= 30 
+        && data.weight <= 300
+        && data.height is number 
+        && data.height >= 100 
+        && data.height <= 250
+        && data.onboarded is bool;
+    }
+    
+    function isValidStrengthAssessment() {
+      let data = request.resource.data;
+      return data.benchPress is number
+        && data.squat is number
+        && data.deadlift is number
+        && data.shoulderPress is number
+        && data.barbellRow is number
+        && data.overheadPress is number
+        && data.legPress is number
+        && data.pullUps is number
+        && data.benchPress >= 0 && data.benchPress <= 500
+        && data.squat >= 0 && data.squat <= 500
+        && data.deadlift >= 0 && data.deadlift <= 500
+        && data.shoulderPress >= 0 && data.shoulderPress <= 500
+        && data.barbellRow >= 0 && data.barbellRow <= 500
+        && data.overheadPress >= 0 && data.overheadPress <= 500
+        && data.legPress >= 0 && data.legPress <= 1000
+        && data.pullUps >= 0 && data.pullUps <= 3;
+    }
+    
+    function isValidWorkout() {
+      let data = request.resource.data;
+      return data.userId is string
+        && data.userId == request.auth.uid
+        && data.date is string
+        && data.muscleGroups is list
+        && data.muscleGroups.size() > 0
+        && data.totalVolume is number
+        && data.totalVolume >= 0
+        && data.totalSets is number
+        && data.totalSets > 0;
+    }
+    
+    // User profile document
+    match /users/{userId}/profile/data {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidProfile();
+      allow update: if isOwner(userId) && isValidProfile();
+      allow delete: if false;
+    }
+    
+    // Strength assessment document
+    match /users/{userId}/strengthAssessment/data {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidStrengthAssessment();
+      allow update: if isOwner(userId) && isValidStrengthAssessment();
+      allow delete: if false;
+    }
+    
+    // Workout documents
+    match /users/{userId}/workouts/{workoutId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidWorkout();
+      allow update: if isOwner(userId) && isValidWorkout();
+      allow delete: if isOwner(userId);
+      allow list: if isOwner(userId);
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
