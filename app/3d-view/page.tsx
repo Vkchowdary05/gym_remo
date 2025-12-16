@@ -1,12 +1,12 @@
 "use client"
 
 import { ProtectedLayout } from "@/components/layout/protected-layout"
-import { MuscleVisualization3DContent } from "@/components/3d/muscle-visualization-content"
+import { MuscleVisualizationContent } from "@/components/anatomy/muscle-visualization-content"
 
-export default function MuscleVisualization3DPage() {
+export default function MuscleVisualizationPage() {
   return (
     <ProtectedLayout>
-      <MuscleVisualization3DContent />
+      <MuscleVisualizationContent />
     </ProtectedLayout>
   )
 }

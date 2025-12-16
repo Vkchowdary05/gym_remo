@@ -1600,10 +1600,14 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
-const MuscleModel3D = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])(()=>__turbopack_context__.A("[project]/components/3d/muscle-model-3d.tsx [app-client] (ecmascript, next/dynamic entry, async loader)").then((mod)=>mod.MuscleModel3D), {
+const MuscleModel3D = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])(()=>(()=>{
+        const e = new Error("Cannot find module './muscle-model-3d'");
+        e.code = 'MODULE_NOT_FOUND';
+        throw e;
+    })().then((mod)=>mod.MuscleModel3D), {
     loadableGenerated: {
         modules: [
-            "[project]/components/3d/muscle-model-3d.tsx [app-client] (ecmascript, next/dynamic entry)"
+            null
         ]
     },
     ssr: false,
