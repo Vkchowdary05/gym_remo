@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
-import { getOverallStrengthLevel, strengthLevelLabels, calculateStrengthLevel } from "@/lib/strength-calculator"
+import { getOverallStrengthLevel, strengthLevelLabels, calculateStrengthLevel, strengthBenchmarks } from "@/lib/strength-calculator"
 import { User, Dumbbell, Palette, LogOut, Save, X, Edit2, History } from "lucide-react"
 import Link from "next/link"
 
@@ -303,9 +303,9 @@ function ProfileContent() {
             <dl className="grid grid-cols-2 gap-4 text-sm">
               {Object.entries(strengthAssessment || {}).map(([key, value]) => {
                 const level =
-                  profile && value > 0
+                  profile && value > 0 && strengthBenchmarks[key]
                     ? calculateStrengthLevel(
-                        key as keyof typeof strengthAssessment,
+                        key as keyof typeof strengthBenchmarks,
                         key === "pullUps" ? (value as number) * profile.weight : (value as number),
                         profile.weight,
                       )

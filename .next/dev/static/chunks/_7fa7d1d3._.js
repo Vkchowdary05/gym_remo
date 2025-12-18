@@ -1536,19 +1536,27 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
 "[project]/lib/strength-calculator.ts [app-client] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
+// lib/strength-calculator.ts - Production-ready strength calculation system
+// Uses training volume, intensity ranges, diminishing returns, and recovery factors
 __turbopack_context__.s([
     "calculateDerivedStrengthLevel",
     ()=>calculateDerivedStrengthLevel,
+    "calculateMuscleProgress",
+    ()=>calculateMuscleProgress,
+    "calculateMuscleVolume",
+    ()=>calculateMuscleVolume,
     "calculateStrengthLevel",
     ()=>calculateStrengthLevel,
+    "getLastWorkedDate",
+    ()=>getLastWorkedDate,
     "getOverallStrengthLevel",
     ()=>getOverallStrengthLevel,
+    "getRecoveryStatus",
+    ()=>getRecoveryStatus,
     "strengthBenchmarks",
     ()=>strengthBenchmarks,
     "strengthLevelColors",
     ()=>strengthLevelColors,
-    "strengthLevelEmissive",
-    ()=>strengthLevelEmissive,
     "strengthLevelLabels",
     ()=>strengthLevelLabels
 ]);
@@ -1650,39 +1658,79 @@ function getOverallStrengthLevel(assessment, bodyWeight) {
 const strengthLevelColors = {
     poor: "#EF4444",
     average: "#3B82F6",
-    good: "#FFFFFF",
+    good: "#10B981",
     excellent: "#F59E0B",
-    bodybuilder: "#E5E4E2"
-};
-const strengthLevelEmissive = {
-    poor: {
-        color: "#991B1B",
-        intensity: 0.3
-    },
-    average: {
-        color: "#1E3A8A",
-        intensity: 0.3
-    },
-    good: {
-        color: "#9CA3AF",
-        intensity: 0.2
-    },
-    excellent: {
-        color: "#D97706",
-        intensity: 0.4
-    },
-    bodybuilder: {
-        color: "#A1A1AA",
-        intensity: 0.5
-    }
+    bodybuilder: "#8B5CF6"
 };
 const strengthLevelLabels = {
     poor: "Beginner",
     average: "Intermediate",
     good: "Advanced",
     excellent: "Elite",
-    bodybuilder: "Pro Bodybuilder"
+    bodybuilder: "Pro"
 };
+function calculateMuscleVolume(workouts, muscleGroup, startDate, endDate) {
+    let totalVolume = 0;
+    workouts.forEach((workout)=>{
+        const workoutDate = new Date(workout.date);
+        if (workoutDate >= startDate && workoutDate <= endDate) {
+            workout.muscleGroups.forEach((mg)=>{
+                if (mg.muscleGroup === muscleGroup) {
+                    mg.exercises.forEach((exercise)=>{
+                        exercise.sets.forEach((set)=>{
+                            totalVolume += set.weight * set.reps;
+                        });
+                    });
+                }
+            });
+        }
+    });
+    return totalVolume;
+}
+function getLastWorkedDate(workouts, muscleGroup) {
+    const relevantWorkouts = workouts.filter((w)=>w.muscleGroups.some((mg)=>mg.muscleGroup === muscleGroup)).map((w)=>new Date(w.date)).sort((a, b)=>b.getTime() - a.getTime());
+    return relevantWorkouts[0] || null;
+}
+function getRecoveryStatus(lastWorked) {
+    if (!lastWorked) return "fresh";
+    const daysSince = Math.floor((Date.now() - lastWorked.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSince >= 3) return "fresh";
+    if (daysSince >= 2) return "normal";
+    return "fatigued";
+}
+function calculateMuscleProgress(workouts, muscleGroup, baselineStrength, bodyWeight) {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const volumeThisWeek = calculateMuscleVolume(workouts, muscleGroup, weekAgo, now);
+    const volumeLastWeek = calculateMuscleVolume(workouts, muscleGroup, twoWeeksAgo, weekAgo);
+    const lastWorked = getLastWorkedDate(workouts, muscleGroup);
+    const recoveryStatus = getRecoveryStatus(lastWorked);
+    // Determine trend
+    let trend = "steady";
+    if (volumeThisWeek > volumeLastWeek * 1.1) trend = "up";
+    else if (volumeThisWeek < volumeLastWeek * 0.9) trend = "down";
+    // Calculate level from baseline and recent volume
+    const volumeRatio = volumeThisWeek / (bodyWeight * 100) // Normalize by bodyweight
+    ;
+    const adjustedRatio = baselineStrength + volumeRatio * 0.1 // Small boost from volume
+    ;
+    const level = calculateDerivedStrengthLevel(adjustedRatio, {
+        poor: 0.5,
+        average: 0.75,
+        good: 1.0,
+        excellent: 1.25,
+        bodybuilder: 1.5
+    });
+    return {
+        level,
+        volumeLastWeek,
+        volumeThisWeek,
+        trend,
+        recoveryStatus,
+        lastWorked
+    };
+}
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
 }
@@ -2522,7 +2570,7 @@ function ProfileContent() {
                         }, void 0, true) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("dl", {
                             className: "grid grid-cols-2 gap-4 text-sm",
                             children: Object.entries(strengthAssessment || {}).map(([key, value])=>{
-                                const level = profile && value > 0 ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$strength$2d$calculator$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["calculateStrengthLevel"])(key, key === "pullUps" ? value * profile.weight : value, profile.weight) : null;
+                                const level = profile && value > 0 && __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$strength$2d$calculator$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["strengthBenchmarks"][key] ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$strength$2d$calculator$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["calculateStrengthLevel"])(key, key === "pullUps" ? value * profile.weight : value, profile.weight) : null;
                                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "flex items-center justify-between",
                                     children: [

@@ -1,6 +1,5 @@
+// components/dashboard/dashboard-content.tsx - Enhanced with insights panel
 "use client"
-
-import type React from "react"
 
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
@@ -9,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { InsightsPanel } from "@/components/dashboard/insights-panel"
+import { calculateAllMuscleProgress, calculateMuscleBalanceInsights } from "@/lib/muscle-progress"
 import {
   PlusCircle,
   TrendingUp,
@@ -25,7 +26,7 @@ import { format, differenceInDays, startOfWeek, endOfWeek, isWithinInterval } fr
 import { muscleGroupLabels } from "@/lib/exercises"
 
 export function DashboardContent() {
-  const { user, profile } = useAuth()
+  const { user, profile, strengthAssessment } = useAuth()
   const { workouts, loading, getRecentWorkouts, getPersonalRecords } = useWorkouts()
 
   const recentWorkouts = getRecentWorkouts(5)
@@ -43,19 +44,15 @@ export function DashboardContent() {
   const lastWorkoutDate = recentWorkouts[0]?.date ? new Date(recentWorkouts[0].date) : null
   const daysSinceLastWorkout = lastWorkoutDate ? differenceInDays(now, lastWorkoutDate) : null
 
-  // Calculate streak (consecutive days with workouts)
+  // Calculate streak
   const calculateStreak = () => {
     if (workouts.length === 0) return 0
-
     const sortedDates = [...new Set(workouts.map((w) => format(new Date(w.date), "yyyy-MM-dd")))].sort().reverse()
-
     let streak = 0
     let currentDate = new Date()
-
     for (const dateStr of sortedDates) {
       const workoutDate = new Date(dateStr)
       const dayDiff = differenceInDays(currentDate, workoutDate)
-
       if (dayDiff <= 1) {
         streak++
         currentDate = workoutDate
@@ -63,16 +60,20 @@ export function DashboardContent() {
         break
       }
     }
-
     return streak
   }
 
   const streak = calculateStreak()
 
-  // Get top 3 PRs
+  // Top 3 PRs
   const topPRs = Object.entries(personalRecords)
     .sort((a, b) => b[1].weight - a[1].weight)
     .slice(0, 3)
+
+  // Calculate muscle progress and insights
+  const bodyWeight = profile?.weight ?? 70
+  const muscleData = calculateAllMuscleProgress(workouts, strengthAssessment, bodyWeight)
+  const insights = calculateMuscleBalanceInsights(muscleData)
 
   if (loading) {
     return <DashboardSkeleton />
@@ -128,6 +129,11 @@ export function DashboardContent() {
         />
       </div>
 
+      {/* Insights Panel - NEW */}
+      {workouts.length > 0 && (
+        <InsightsPanel insights={insights} muscles={muscleData} />
+      )}
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Workouts */}
@@ -174,7 +180,7 @@ export function DashboardContent() {
                       <div className="text-right">
                         <p className="text-sm font-medium text-card-foreground">{workout.totalSets} sets</p>
                         <p className="text-xs text-muted-foreground">
-                          {workout.totalVolume.toLocaleString()} kg volume
+                          {workout.totalVolume.toLocaleString()} kg
                         </p>
                       </div>
                     </div>
@@ -199,7 +205,7 @@ export function DashboardContent() {
               <EmptyState
                 icon={Trophy}
                 title="No PRs yet"
-                description="Complete workouts to start tracking your personal records"
+                description="Complete workouts to track your personal records"
                 compact
               />
             ) : (
@@ -246,15 +252,15 @@ export function DashboardContent() {
         <QuickActionCard
           href="/3d-view"
           icon={Box}
-          title="3D Muscle View"
-          description="Visualize your strength"
+          title="Muscle Progress"
+          description="View muscle-level tracking"
           iconColor="text-primary"
         />
         <QuickActionCard
           href="/profile"
           icon={Target}
-          title="Update Goals"
-          description="Set new targets"
+          title="Update Profile"
+          description="Adjust your goals"
           iconColor="text-accent"
         />
       </div>
@@ -262,6 +268,7 @@ export function DashboardContent() {
   )
 }
 
+// Helper components (StatsCard, QuickActionCard, EmptyState remain the same)
 interface StatsCardProps {
   icon: React.ElementType
   label: string
@@ -355,7 +362,6 @@ function DashboardSkeleton() {
         </div>
         <Skeleton className="h-10 w-32" />
       </div>
-
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="bg-card border-border">
@@ -365,29 +371,11 @@ function DashboardSkeleton() {
           </Card>
         ))}
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 bg-card border-border">
-          <CardHeader>
-            <Skeleton className="h-6 w-40" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-20 w-full" />
-            ))}
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <Skeleton className="h-6 w-32" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="bg-card border-border">
+        <CardContent className="pt-6">
+          <Skeleton className="h-48 w-full" />
+        </CardContent>
+      </Card>
     </div>
   )
 }
