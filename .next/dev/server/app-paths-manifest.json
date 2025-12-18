@@ -1,8 +1,8 @@
 {
   "/3d-view/page": "app/3d-view/page.js",
-  "/add-workout/page": "app/add-workout/page.js",
   "/auth/page": "app/auth/page.js",
   "/dashboard/page": "app/dashboard/page.js",
   "/page": "app/page.js",
+  "/profile/page": "app/profile/page.js",
   "/progress/page": "app/progress/page.js"
 }
