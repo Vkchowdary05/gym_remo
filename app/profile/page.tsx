@@ -301,7 +301,9 @@ function ProfileContent() {
             </>
           ) : (
             <dl className="grid grid-cols-2 gap-4 text-sm">
-              {Object.entries(strengthAssessment || {}).map(([key, value]) => {
+              {Object.entries(strengthAssessment || {})
+                .filter(([key]) => key !== "updatedAt") // Filter out timestamp fields
+                .map(([key, value]) => {
                 const level =
                   profile && value > 0 && strengthBenchmarks[key]
                     ? calculateStrengthLevel(
