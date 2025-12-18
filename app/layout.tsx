@@ -16,8 +16,13 @@ export const metadata: Metadata = {
   description:
     "A comprehensive fitness tracking app with 3D muscle visualization, workout tracking, and progress analytics",
   keywords: ["fitness", "workout", "gym", "tracking", "muscle", "strength"],
-    generator: 'v0.app'
+    generator: 'v0.app',
+    icons: {
+    icon: "/favicon.ico",
+  }
 }
+
+
 
 export const viewport: Viewport = {
   themeColor: "#3B82F6",
